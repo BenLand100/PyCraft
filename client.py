@@ -47,7 +47,7 @@ class Client(object):
         
     def login(self,username):
         self.us.name = username
-        self.send(w_handshake(username))
+        self.send(w_handshake_cts(username))
         
     def sendPos(self):
         self.us.y -= 0.05
@@ -66,7 +66,7 @@ class Client(object):
         print 'Party == Started'
      
     def _handshake(self,packet):
-        self.send(w_loginrequest(14,self.us.name,9001,0))
+        self.send(w_login_request_cts(14,self.us.name,9001,0))
         
     def _playeronground(self,packet):
         self.us.onground = packet['OnGround'];    

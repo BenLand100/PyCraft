@@ -1,3 +1,6 @@
+from datatypes import *
+from StringIO import StringIO
+
 ###Packet 0x00
 def r_keep_alive(data):
 	return {'id':0x00}
@@ -374,9 +377,7 @@ def w_kick(Message):
 
 packet_readers = {
 	0x00:r_keep_alive,
-	0x01:r_login_request_cts,
 	0x01:r_login_request_stc,
-	0x02:r_handshake_cts,
 	0x02:r_handshake_stc,
 	0x03:r_chat_message,
 	0x04:r_time_update,
@@ -388,7 +389,6 @@ packet_readers = {
 	0x0A:r_player,
 	0x0B:r_player_position,
 	0x0C:r_player_look,
-	0x0D:r_player_position_and_look_cts,
 	0x0D:r_player_position_and_look_stc,
 	0x0E:r_player_digging,
 	0x0F:r_player_block_placement,
@@ -434,3 +434,11 @@ packet_readers = {
 	0xC8:r_increment_statistic,
 	0xFF:r_kick
 }
+
+def readpacket(databuf):
+    sio = StringIO(databuf)
+    pid = r_ubyte(sio)
+    if pid in packet_readers:
+        return (packet_readers[pid](sio),databuf[sio.tell():])
+    else: raise Exception('Unknown Packet: ' + hex(pid))
+

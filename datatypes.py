@@ -12,6 +12,12 @@ def w_byte(data):
 def r_byte(sio):
     return unpack('>b',sio.read(1))[0]
 
+def w_ubyte(data):
+    return pack('>B',data)
+
+def r_ubyte(sio):
+    return unpack('>B',sio.read(1))[0]
+
 def w_short(data):
     return pack('>h',data)
 
@@ -49,21 +55,21 @@ def r_double(sio):
     return unpack('>d',sio.read(8))[0]
 
 def w_string8(data):
-    return short(len(data))+data
+    return w_short(len(data))+data
 
 def r_string8(sio):
     length = parse_short(sio)
     return sio.read(length)
 
 def w_string16(data):
-    chars = ''.join([shortchar(i) for i in data])
-    return short(len(data))+chars
+    chars = ''.join([w_shortchar(i) for i in data])
+    return w_short(len(data))+chars
 
 def r_string16(sio):
-    length = parse_short(sio)
+    length = r_short(sio)
     result = ''
     for i in range(length):
-        result += parse_shortchar(sio)
+        result += r_shortchar(sio)
     return result
     
 

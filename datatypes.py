@@ -85,3 +85,46 @@ def r_bool(sio):
         return True
     else:
         return False
+
+def w_metadata(data):
+    string = ''
+    for (b,dat) in data:
+        dtype = b >> 5
+        if dtype == 0:
+            string+=w_ubyte(b)+w_byte(dat)
+        elif dtype == 1:
+            string+=w_ubyte(b)+w_short(dat)
+        elif dtype == 2:
+            string+=w_ubyte(b)+w_int(dat)
+        elif dtype == 3:
+            string+=w_ubyte(b)+w_float(dat)
+        elif dtype == 4:
+            string+=w_ubyte(b)+w_str16(dat)
+        elif dtype == 5:
+            string+=w_ubyte(b)+w_short(dat[0])+w_byte(dat[1])+w_short(dat[2])
+        elif dtype == 6:
+            string+=w_ubyte(b)+w_int(dat[0])+w_int(dat[1])+w_int(dat[2])
+    string += w_ubyte(127)
+    return string
+    
+def r_metadata(sio):
+    metadata = []
+    while True:
+        b = r_ubyte(sio)
+        if b == 127: break
+        dtype = b >> 5
+        if dtype == 0:
+            metadata.append((b,r_byte(sio)))
+        elif dtype == 1:
+            metadata.append((b,r_short(sio)))
+        elif dtype == 2:
+            metadata.append((b,r_int(sio)))
+        elif dtype == 3:
+            metadata.append((b,r_float(sio)))
+        elif dtype == 4:
+            metadata.append((b,r_string16(sio)))
+        elif dtype == 5:
+            metadata.append((b,(r_short(sio),r_byte(sio),r_short(sio))))
+        elif dtype == 6:
+            metadata.append((b,(r_int(sio),r_int(sio),r_int(sio))))
+    return metadata

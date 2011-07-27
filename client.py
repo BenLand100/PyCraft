@@ -50,9 +50,7 @@ class Client(object):
         self.send(w_handshake_cts(username))
         
     def sendPos(self):
-        self.us.y -= 0.05
-        self.us.stance -= 0.05
-        self.send(w_playerlookandposition(self.us.x,self.us.y,self.us.stance,self.us.z,self.us.yaw,self.us.pitch,self.us.onground))
+        self.send(w_player_position_and_look_cts(self.us.x,self.us.y,self.us.stance,self.us.z,self.us.yaw,self.us.pitch,self.us.onground))
     
     def send(self,packet):
         print len(packet),self._socket.send(packet)

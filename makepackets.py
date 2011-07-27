@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+#DON'T OVERRITE THE ACTUAL FILE WITH THIS FILE'S OUTPUT
+#kept because it might be useful if minecraft's protocol
+#ever changes radically (unlikely)
+
 from re import *
 from string import *
 

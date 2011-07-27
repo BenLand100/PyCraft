@@ -189,9 +189,9 @@ def w_stance_update(A,B,C,D,E,F):
 
 ###Packet 0x1C
 def r_entity_velocity(data):
-	return {'id':0x1C,'EntityID':r_int(data)}
-def w_entity_velocity(EntityID):
-	return w_byte(0x1C)+w_int(EntityID)
+	return {'id':0x1C,'EntityID':r_int(data),'vX':r_short(data),'vY':r_short(data),'vZ':r_short(data)}
+def w_entity_velocity(EntityID,vX,vY,vZ):
+	return w_byte(0x1C)+w_int(EntityID)+w_short(vX)+w_short(vY)+w_short(vZ)
 
 ###Packet 0x1D
 def r_destroy_entity(data):

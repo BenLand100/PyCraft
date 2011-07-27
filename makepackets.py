@@ -36,17 +36,24 @@ while True:
                     m1 = search('" \\| (.*)',line)
                     m2 = search('" \\| (.*)',f.readline())
                     if m1 and m2: fields.append((m1.group(1),m2.group(1))) 
-            packets.append((lastname, id, fields))
-                
+            packets.append((replace(lower(lastname),' ','_'), id, fields))
+               
+file = ''
+ 
 for lastname,id,fields in packets:
     code = '###Packet 0x'+id+'\n'
-    code += 'def r_'+replace(lower(lastname),' ','_')+'(data):\n\treturn {'
+    code += 'def r_'+lastname+'(data):\n\treturn {\'id\':0x'+id+','
     code += ','.join(['\''+name+'\':r_'+type+'(data)' for (name,type) in fields])
     code += '}\n'
-    code += 'def w_'+replace(lastname,' ','_')+'('+','.join([name for (name,type) in fields])+'):\n\treturn w_byte(0x'+id+')+'
+    code += 'def w_'+lastname+'('+','.join([name for (name,type) in fields])+'):\n\treturn w_byte(0x'+id+')+'
     code += '+'.join(['w_'+type+'('+name+')' for (name,type) in fields])
     code += '\n\n'
-    print code
+    file += code
+
+file+='packet_readers = {'+','.join(['\n\t0x'+id+':r_'+lastname+'' for (lastname,id,fields) in packets])+'\n}'
+
+print file
     
+
         
 f.close()

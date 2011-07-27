@@ -10,9 +10,7 @@ This packet may be sent to keep the connection alive, or may be a relic of UDP t
 | class="col0 centeralign" | 0x00
 |}
 
-=== Login Request (0x01) ===
-
-==== Client to Server ====
+=== Login Request cts (0x01) ===
 
 Sent by the client after the handshake to finish logging in. If the version is outdated or any field is invalid, the server will disconnect the client with a [[#Disconnect.2FKick_.280xFF.29|kick]]. If the client is started in offline mode, the player's username will default to <code>Player</code>, making LAN play with more than one player impossible (without authenticating) as the server will prevent multiple users with the same name.
 
@@ -49,7 +47,7 @@ Sent by the client after the handshake to finish logging in. If the version is o
 | class="col1 rightalign" colspan="4" | 16 bytes + length of strings
 |}
 
-==== Server to Client ====
+=== login request stc ===
 
 Sent by the server if it accepts the clients [[#Login_Request_.280x01.29|login request]]. If it didn't, it'll send a [[#Disconnect.2FKick_.280xFF.29|kick]] instead.
 
@@ -86,9 +84,7 @@ Sent by the server if it accepts the clients [[#Login_Request_.280x01.29|login r
 | class="col1 rightalign" colspan="4" | 16 bytes + length of strings
 |}
 
-=== Handshake (0x02) ===
-
-==== Client to Server ====
+=== Handshake cts ====
 
 This is the first packet sent when the client connects and is used for [[Authentication]].
 
@@ -110,7 +106,7 @@ This is the first packet sent when the client connects and is used for [[Authent
 | class="col1 rightalign" colspan="4" | 3 bytes + length of strings
 |}
 
-==== Server to Client ====
+=== handshake stc ===
 
 This is the first packet sent when the client connects and is used for [[Authentication]]. If the hash is '-', then the client continues without doing name authentication. If the hash is a '+', the client sends the server password in the [[#Login_Request_.280x01.29|login request]]. (Note that this hash, as of the latest version of the Beta server, is a randomly generated long in hexadecimal form, and has nothing to do with the client or the server he is connected to)
 
@@ -2077,8 +2073,6 @@ See the Block Change command for description of the general format of a block ch
 
 This packet is sent to the client when a note block is played or a piston changes it's state. 
 
-==== Note Block ====
-
 It shows the note particle being emitted from the block as well as playing the tone.
 
 {| class="wikitable"
@@ -2089,7 +2083,7 @@ It shows the note particle being emitted from the block as well as playing the t
 ! class="col3" | Example
 ! class="col4" | Notes
 |- class="row1"
-| class="col0 centeralign" rowspan="5" | 0x35
+| class="col0 centeralign" rowspan="5" | 0x36
 | class="col1 centeralign" | X
 | class="col2 centeralign" | int
 | class="col3 centeralign" | <code>502</code>
@@ -2105,12 +2099,12 @@ It shows the note particle being emitted from the block as well as playing the t
 | class="col2 centeralign" | <code>18</code>
 | class="col3" | Block Z Coordinate
 |- class="row4"
-| class="col0 centeralign" | InstrumentType 
+| class="col0 centeralign" | DataA 
 | class="col1 centeralign" | byte
 | class="col2 centeralign" | <code>3</code>
 | class="col3" | The instrument type (see the table below).
 |- class="row5"
-| class="col0 centeralign" | Pitch
+| class="col0 centeralign" | DataB
 | class="col1 centeralign" | byte
 | class="col2 centeralign" | <code>17</code>
 | class="col3" | The pitch of the note (between 0-24 inclusive where 0 is the lowest and 24 is the highest).
@@ -2143,45 +2137,7 @@ Instrument Types
 
 More information about how the pitch values correspond to notes in real life are available on the [http://www.minecraftwiki.net/wiki/Note_Block official Minecraft wiki].
 
-==== Pistons ====
-
-{| class="wikitable"
-|- class="row0"
-! class="col0" | Packet ID
-! class="col1" | Field Name
-! class="col2" | Field Type
-! class="col3" | Example
-! class="col4" | Notes
-|- class="row1"
-| class="col0 centeralign" rowspan="5" | 0x35
-| class="col1 centeralign" | X
-| class="col2 centeralign" | int
-| class="col3 centeralign" | <code>502</code>
-| class="col4" | Block X Coordinate
-|- class="row2"
-| class="col0 centeralign" | Y
-| class="col1 centeralign" | short
-| class="col2 centeralign" | <code>71</code>
-| class="col3" | Block Y Coordinate
-|- class="row3"
-| class="col0 centeralign" | Z
-| class="col1 centeralign" | int
-| class="col2 centeralign" | <code>18</code>
-| class="col3" | Block Z Coordinate
-|- class="row4"
-| class="col0 centeralign" | State
-| class="col1 centeralign" | byte
-| class="col2 centeralign" | <code>1</code>
-| class="col3" | The state the piston changes to. (0 for pushing, 1 for pulling)
-|- class="row5"
-| class="col0 centeralign" | Direction
-| class="col1 centeralign" | byte
-| class="col2 centeralign" | <code>5</code>
-| class="col3" | The direction the piston pushes. See table below.
-|- class="row6"
-! class="col0" | Total Size:
-| class="col1 rightalign" colspan="4" | 13 bytes
-|}
+Pistons
 
 Directions
 {| class="wikitable"

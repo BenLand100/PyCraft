@@ -1,8 +1,8 @@
 ###Packet 0x00
 def r_keep_alive(data):
-	return {'id':0x00,}
+	return {'id':0x00}
 def w_keep_alive():
-	return w_byte(0x00)+
+	return w_byte(0x00)
 
 ###Packet 0x01
 def r_login_request_cts(data):
@@ -42,9 +42,9 @@ def w_time_update(Time):
 
 ###Packet 0x05
 def r_entity_equipment(data):
-	return {'id':0x05,'Entity ID':r_int(data),'Slot':r_short(data),'ItemID':r_short(data),'Damage':r_short(data)}
-def w_entity_equipment(Entity ID,Slot,ItemID,Damage):
-	return w_byte(0x05)+w_int(Entity ID)+w_short(Slot)+w_short(ItemID)+w_short(Damage)
+	return {'id':0x05,'EntityID':r_int(data),'Slot':r_short(data),'ItemID':r_short(data),'Damage':r_short(data)}
+def w_entity_equipment(EntityID,Slot,ItemID,Damage):
+	return w_byte(0x05)+w_int(EntityID)+w_short(Slot)+w_short(ItemID)+w_short(Damage)
 
 ###Packet 0x06
 def r_spawn_position(data):
@@ -54,9 +54,9 @@ def w_spawn_position(X,Y,Z):
 
 ###Packet 0x07
 def r_use_entity(data):
-	return {'id':0x07,'UserEID':r_int(data)}
-def w_use_entity(UserEID):
-	return w_byte(0x07)+w_int(UserEID)
+	return {'id':0x07,'EntityID':r_int(data)}
+def w_use_entity(EntityID):
+	return w_byte(0x07)+w_int(EntityID)
 
 ###Packet 0x08
 def r_update_health(data):
@@ -90,9 +90,9 @@ def w_player_look(Yaw,Pitch,OnGround):
 
 ###Packet 0x0D
 def r_player_position_and_look_cts(data):
-	return {'id':0x0D,'X':r_double(data),'Y':r_double(data),'Stance':r_double(data),'Z':r_double(data),'Yaw':r_float(data),'Pitch':r_float(data),'On Ground':r_bool(data)}
-def w_player_position_and_look_cts(X,Y,Stance,Z,Yaw,Pitch,On Ground):
-	return w_byte(0x0D)+w_double(X)+w_double(Y)+w_double(Stance)+w_double(Z)+w_float(Yaw)+w_float(Pitch)+w_bool(On Ground)
+	return {'id':0x0D,'X':r_double(data),'Y':r_double(data),'Stance':r_double(data),'Z':r_double(data),'Yaw':r_float(data),'Pitch':r_float(data),'OnGround':r_bool(data)}
+def w_player_position_and_look_cts(X,Y,Stance,Z,Yaw,Pitch,OnGround):
+	return w_byte(0x0D)+w_double(X)+w_double(Y)+w_double(Stance)+w_double(Z)+w_float(Yaw)+w_float(Pitch)+w_bool(OnGround)
 
 ###Packet 0x0D
 def r_player_position_and_look_stc(data):
@@ -107,10 +107,14 @@ def w_player_digging(Status,X,Y,Z,Face):
 	return w_byte(0x0E)+w_byte(Status)+w_int(X)+w_byte(Y)+w_int(Z)+w_byte(Face)
 
 ###Packet 0x0F
-def r_player_block_placement!(data):
-	return {'id':0x0F,'X':r_int(data),'Y':r_byte(data),'Z':r_int(data),'Direction':r_byte(data),'BlockID':r_short(data),'Amount':r_byte(data),'Damage':r_short(data)}
-def w_player_block_placement!(X,Y,Z,Direction,BlockID,Amount,Damage):
-	return w_byte(0x0F)+w_int(X)+w_byte(Y)+w_int(Z)+w_byte(Direction)+w_short(BlockID)+w_byte(Amount)+w_short(Damage)
+def r_player_block_placement(data):
+	packet = {'id':0x0F,'X':r_int(data),'Y':r_byte(data),'Z':r_int(data),'Direction':r_byte(data),'BlockID':r_short(data)}
+	if packet['BlockID'] >= 0: packet.update({'Amount':r_byte(data),'Damage':r_short(data)})
+	return packet
+def w_player_block_placement(X,Y,Z,Direction,BlockID,Amount,Damage):
+	data = w_byte(0x0F)+w_int(X)+w_byte(Y)+w_int(Z)+w_byte(Direction)+w_short(BlockID)
+	if BlockID >= 0: data += w_byte(Amount)+w_short(Damage)
+	return data
 
 ###Packet 0x10
 def r_holding_change(data):
@@ -155,9 +159,11 @@ def w_collect_item(CollectedEID,CollectorEID):
 	return w_byte(0x16)+w_int(CollectedEID)+w_int(CollectorEID)
 
 ###Packet 0x17
-def r_addobject!(data):
-	return {'id':0x17,'EntityID':r_int(data),'Type':r_byte(data),'X':r_int(data),'Y':r_int(data),'Z':r_int(data),'Flag':r_int(data),'Xmap':r_short(data),'Ymap':r_short(data),'Zmap':r_short(data)}
-def w_addobject!(EntityID,Type,X,Y,Z,Flag,Xmap,Ymap,Zmap):
+def r_add_object(data):
+	packet = {'id':0x17,'EntityID':r_int(data),'Type':r_byte(data),'X':r_int(data),'Y':r_int(data),'Z':r_int(data),'Flag':r_int(data)}
+	if packet['Flag'] > 0: packet.update({'Xmap':r_short(data),'Ymap':r_short(data),'Zmap':r_short(data)})
+	return packet
+def w_add_object(EntityID,Type,X,Y,Z,Flag,Xmap,Ymap,Zmap):
 	return w_byte(0x17)+w_int(EntityID)+w_byte(Type)+w_int(X)+w_int(Y)+w_int(Z)+w_int(Flag)+w_short(Xmap)+w_short(Ymap)+w_short(Zmap)
 
 ###Packet 0x18
@@ -168,9 +174,9 @@ def w_spawn_mob(EntityID,Type,X,Y,Z,Yaw,Pitch,Metadata):
 
 ###Packet 0x19
 def r_painting(data):
-	return {'id':0x19,'Entity ID':r_int(data),'Title':r_String16(data),'X':r_int(data),'Y':r_int(data),'Z':r_int(data),'Direction':r_int(data)}
-def w_painting(Entity ID,Title,X,Y,Z,Direction):
-	return w_byte(0x19)+w_int(Entity ID)+w_String16(Title)+w_int(X)+w_int(Y)+w_int(Z)+w_int(Direction)
+	return {'id':0x19,'EntityID':r_int(data),'Title':r_String16(data),'X':r_int(data),'Y':r_int(data),'Z':r_int(data),'Direction':r_int(data)}
+def w_painting(EntityID,Title,X,Y,Z,Direction):
+	return w_byte(0x19)+w_int(EntityID)+w_String16(Title)+w_int(X)+w_int(Y)+w_int(Z)+w_int(Direction)
 
 ###Packet 0x1B
 def r_stance_update(data):
@@ -243,7 +249,8 @@ def r_prechunk(data):
 	return {'id':0x32,'X':r_int(data),'Z':r_int(data),'Mode':r_bool(data)}
 def w_prechunk(X,Z,Mode):
 	return w_byte(0x32)+w_int(X)+w_int(Z)+w_bool(Mode)
-
+	
+'''
 ###Packet 0x33
 def r_map_chunk(data):
 	return {'id':0x33,'X':r_int(data),'Y':r_short(data),'Z':r_int(data),'SizeX':r_byte(data),'SizeY':r_byte(data),'SizeZ':r_byte(data),'CompressedSize':r_int(data),'CompressedData':r_byte array(data)}
@@ -255,6 +262,7 @@ def r_multi_block_change(data):
 	return {'id':0x34,'ChunkX':r_int(data),'ChunkZ':r_int(data),'ArraySize':r_short(data),'CoordinateArray':r_short array(data),'TypeArray':r_byte array(data),'MetadataArray':r_byte array(data)}
 def w_multi_block_change(ChunkX,ChunkZ,ArraySize,CoordinateArray,TypeArray,MetadataArray):
 	return w_byte(0x34)+w_int(ChunkX)+w_int(ChunkZ)+w_short(ArraySize)+w_short array(CoordinateArray)+w_byte array(TypeArray)+w_byte array(MetadataArray)
+'''
 
 ###Packet 0x35
 def r_block_change(data):
@@ -268,11 +276,13 @@ def r_block_action(data):
 def w_block_action(X,Y,Z,DataA ,DataB):
 	return w_byte(0x36)+w_int(X)+w_short(Y)+w_int(Z)+w_byte(DataA )+w_byte(DataB)
 
+'''
 ###Packet 0x3C
 def r_explosion(data):
-	return {'id':0x3C,'X':r_double(data),'Y':r_double(data),'Z':r_double(data),'Unknown':r_float(data),'RecordCount':r_int(data),'Records':r_(byte, byte, byte) × count(data)}
+	return {'id':0x3C,'X':r_double(data),'Y':r_double(data),'Z':r_double(data),'Unknown':r_float(data),'RecordCount':r_int(data),'Records':r_{(byte, byte, byte) * count}(data)}
 def w_explosion(X,Y,Z,Unknown,RecordCount,Records):
-	return w_byte(0x3C)+w_double(X)+w_double(Y)+w_double(Z)+w_float(Unknown)+w_int(RecordCount)+w_(byte, byte, byte) × count(Records)
+	return w_byte(0x3C)+w_double(X)+w_double(Y)+w_double(Z)+w_float(Unknown)+w_int(RecordCount)+w_(byte, byte, byte) * count(Records)
+'''
 
 ###Packet 0x3D
 def r_sound_effect(data):
@@ -316,11 +326,13 @@ def r_set_slot(data):
 def w_set_slot(WindowID,Slot,ItemID,ItemCount,ItemUses):
 	return w_byte(0x67)+w_byte(WindowID)+w_short(Slot)+w_short(ItemID)+w_byte(ItemCount)+w_short(ItemUses)
 
+'''
 ###Packet 0x68
 def r_window_items!(data):
-	return {'id':0x68,'WindowID':r_byte(data),'Count':r_short(data),'Payload':r_…(data)}
+	return {'id':0x68,'WindowID':r_byte(data),'Count':r_short(data),'Payload':r_(data)}
 def w_window_items!(WindowID,Count,Payload):
-	return w_byte(0x68)+w_byte(WindowID)+w_short(Count)+w_…(Payload)
+	return w_byte(0x68)+w_byte(WindowID)+w_short(Count)+w_(Payload)
+'''
 
 ###Packet 0x69
 def r_update_progress_bar(data):
@@ -340,11 +352,13 @@ def r_update_sign(data):
 def w_update_sign(X,Y,Z,Text1,Text2,Text3,Text4):
 	return w_byte(0x82)+w_int(X)+w_short(Y)+w_int(Z)+w_string16(Text1)+w_string16(Text2)+w_string16(Text3)+w_string16(Text4)
 
+'''
 ###Packet 0x83
 def r_map_data(data):
-	return {'id':0x83,'UnknownA':r_short(data),'UnknownB':r_short(data),'TextLength':r_unsigned byte(data),'Text':r_byte array(data)}
+	return {'id':0x83,'UnknownA':r_short(data),'UnknownB':r_short(data),'TextLength':r_ubyte(data),'Text':r_byte array(data)}
 def w_map_data(UnknownA,UnknownB,TextLength,Text):
 	return w_byte(0x83)+w_short(UnknownA)+w_short(UnknownB)+w_unsigned byte(TextLength)+w_byte array(Text)
+'''
 
 ###Packet 0xC8
 def r_increment_statistic(data):
@@ -377,7 +391,7 @@ packet_readers = {
 	0x0D:r_player_position_and_look_cts,
 	0x0D:r_player_position_and_look_stc,
 	0x0E:r_player_digging,
-	0x0F:r_player_block_placement!,
+	0x0F:r_player_block_placement,
 	0x10:r_holding_change,
 	0x11:r_use_bed,
 	0x12:r_animate,
@@ -385,7 +399,7 @@ packet_readers = {
 	0x14:r_spawn_player,
 	0x15:r_pickup_spawn,
 	0x16:r_collect_item,
-	0x17:r_addobject!,
+	0x17:r_add_object,
 	0x18:r_spawn_mob,
 	0x19:r_painting,
 	0x1B:r_stance_update,
@@ -400,11 +414,11 @@ packet_readers = {
 	0x27:r_attach_entity,
 	0x28:r_entity_metadata,
 	0x32:r_prechunk,
-	0x33:r_map_chunk,
-	0x34:r_multi_block_change,
+	#0x33:r_map_chunk,
+	#0x34:r_multi_block_change,
 	0x35:r_block_change,
 	0x36:r_block_action,
-	0x3C:r_explosion,
+	#0x3C:r_explosion,
 	0x3D:r_sound_effect,
 	0x46:r_new_state,
 	0x47:r_thunderbolt,
@@ -412,11 +426,11 @@ packet_readers = {
 	0x65:r_close_window,
 	0x66:r_window_click,
 	0x67:r_set_slot,
-	0x68:r_window_items!,
+	#0x68:r_window_items,
 	0x69:r_update_progress_bar,
 	0x6A:r_transaction,
 	0x82:r_update_sign,
-	0x83:r_map_data,
+	#0x83:r_map_data,
 	0xC8:r_increment_statistic,
 	0xFF:r_kick
 }

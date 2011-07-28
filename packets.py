@@ -1,5 +1,5 @@
 from datatypes import *
-from StringIO import StringIO
+from cStringIO import StringIO
 
 ###Packet 0x00
 def r_keep_alive(data):
@@ -231,9 +231,9 @@ def w_entity_teleport(EntityID,X,Y,Z,Yaw,Pitch):
 
 ###Packet 0x26
 def r_entity_status(data):
-	return {'id':0x26,'EntityID':r_Int(data),'Status':r_Byte(data)}
+	return {'id':0x26,'EntityID':r_int(data),'Status':r_byte(data)}
 def w_entity_status(EntityID,Status):
-	return w_byte(0x26)+w_Int(EntityID)+w_Byte(Status)
+	return w_byte(0x26)+w_int(EntityID)+w_byte(Status)
 
 ###Packet 0x27
 def r_attach_entity(data):
@@ -259,7 +259,7 @@ def r_map_chunk(data):
 	return {'id':0x33,'X':r_int(data),'Y':r_short(data),'Z':r_int(data),'SizeX':r_byte(data),'SizeY':r_byte(data),'SizeZ':r_byte(data),'CompressedSize':r_int(data),'CompressedData':r_byte array(data)}
 def w_map_chunk(X,Y,Z,SizeX,SizeY,SizeZ,CompressedSize,CompressedData):
 	return w_byte(0x33)+w_int(X)+w_short(Y)+w_int(Z)+w_byte(SizeX)+w_byte(SizeY)+w_byte(SizeZ)+w_int(CompressedSize)+w_byte array(CompressedData)
-
+	
 ###Packet 0x34
 def r_multi_block_change(data):
 	return {'id':0x34,'ChunkX':r_int(data),'ChunkZ':r_int(data),'ArraySize':r_short(data),'CoordinateArray':r_short array(data),'TypeArray':r_byte array(data),'MetadataArray':r_byte array(data)}
@@ -325,17 +325,36 @@ def w_window_click(WindowID,Slot,RightClick,ActionNumber,Shift,ItemID,ItemCount,
 
 ###Packet 0x67
 def r_set_slot(data):
-	return {'id':0x67,'WindowID':r_byte(data),'Slot':r_short(data),'ItemID':r_short(data),'ItemCount':r_byte(data),'ItemUses':r_short(data)}
-def w_set_slot(WindowID,Slot,ItemID,ItemCount,ItemUses):
-	return w_byte(0x67)+w_byte(WindowID)+w_short(Slot)+w_short(ItemID)+w_byte(ItemCount)+w_short(ItemUses)
+	packet = {'id':0x67,'WindowID':r_byte(data),'Slot':r_short(data),'ItemID':r_short(data)}
+	if packet['ItemID'] != -1:
+	    packet.update({'ItemCount':r_byte(data),'ItemUses':r_short(data)})
+	return packet
+def w_set_slot(WindowID,Slot,ItemID,ItemCount=0,ItemUses=0):
+    data = w_byte(0x67)+w_byte(WindowID)+w_short(Slot)+w_short(ItemID)
+    if ItemID != -1:
+        data += w_byte(ItemCount)+w_short(ItemUses)
+    return data
 
-'''
 ###Packet 0x68
-def r_window_items!(data):
-	return {'id':0x68,'WindowID':r_byte(data),'Count':r_short(data),'Payload':r_(data)}
-def w_window_items!(WindowID,Count,Payload):
-	return w_byte(0x68)+w_byte(WindowID)+w_short(Count)+w_(Payload)
-'''
+def r_window_items(data):
+	packet = {'id':0x68,'WindowID':r_byte(data),'Count':r_short(data)}
+	payload = []
+	for i in range(packet['Count']):
+	    id = r_short(data)
+	    if id != -1:
+	        payload.append((id,r_byte(data),r_short(data)))
+	    else:
+	        payload.append(None)
+	packet['Payload'] = payload
+	return packet
+def w_window_items(WindowID,Count,Payload):
+	data = w_byte(0x68)+w_byte(WindowID)+w_short(Count)
+	for item in Payload:
+	    if item:
+	        data += w_short(item[0])+w_byte(item[1])+w_short(item[2])
+	    else:
+	        data += w_short(-1)
+
 
 ###Packet 0x69
 def r_update_progress_bar(data):
@@ -426,7 +445,7 @@ packet_readers = {
 	0x65:r_close_window,
 	0x66:r_window_click,
 	0x67:r_set_slot,
-	#0x68:r_window_items,
+	0x68:r_window_items,
 	0x69:r_update_progress_bar,
 	0x6A:r_transaction,
 	0x82:r_update_sign,

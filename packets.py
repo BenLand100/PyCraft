@@ -253,13 +253,16 @@ def r_prechunk(data):
 def w_prechunk(X,Z,Mode):
 	return w_byte(0x32)+w_int(X)+w_int(Z)+w_bool(Mode)
 	
-'''
 ###Packet 0x33
 def r_map_chunk(data):
-	return {'id':0x33,'X':r_int(data),'Y':r_short(data),'Z':r_int(data),'SizeX':r_byte(data),'SizeY':r_byte(data),'SizeZ':r_byte(data),'CompressedSize':r_int(data),'CompressedData':r_byte array(data)}
+	packet = {'id':0x33,'X':r_int(data),'Y':r_short(data),'Z':r_int(data),'SizeX':r_byte(data),'SizeY':r_byte(data),'SizeZ':r_byte(data),'CompressedSize':r_int(data)}
+	packet['CompressedData'] = data.read(packet['CompressedSize'])
+	if len(packet['CompressedData']) != packet['CompressedSize']: raise struct.error('Not enough data')
+	return packet
 def w_map_chunk(X,Y,Z,SizeX,SizeY,SizeZ,CompressedSize,CompressedData):
-	return w_byte(0x33)+w_int(X)+w_short(Y)+w_int(Z)+w_byte(SizeX)+w_byte(SizeY)+w_byte(SizeZ)+w_int(CompressedSize)+w_byte array(CompressedData)
-	
+	return w_byte(0x33)+w_int(X)+w_short(Y)+w_int(Z)+w_byte(SizeX)+w_byte(SizeY)+w_byte(SizeZ)+w_int(CompressedSize)+CompressedData
+
+'''
 ###Packet 0x34
 def r_multi_block_change(data):
 	return {'id':0x34,'ChunkX':r_int(data),'ChunkZ':r_int(data),'ArraySize':r_short(data),'CoordinateArray':r_short array(data),'TypeArray':r_byte array(data),'MetadataArray':r_byte array(data)}
@@ -433,7 +436,7 @@ packet_readers = {
 	0x27:r_attach_entity,
 	0x28:r_entity_metadata,
 	0x32:r_prechunk,
-	#0x33:r_map_chunk,
+	0x33:r_map_chunk,
 	#0x34:r_multi_block_change,
 	0x35:r_block_change,
 	0x36:r_block_action,

@@ -113,7 +113,7 @@ class Client(object):
         0x0A:_playeronground,0x0B:_playerpos,0x0C:_playerlook,0x0D:_playerlookandpos, #player location
     
         0x18:_ignore,0x1c:_ignore,0x1d:_ignore,0x1e:_ignore,0x1f:_ignore,0x20:_ignore,0x21:_ignore, #entity moving stuff
-        0x32:_dump, #chunk stuff
+        0x32:_dump,0x33:_dump, #chunk stuff
         
         0xff:_kicked
     };

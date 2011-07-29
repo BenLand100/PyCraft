@@ -6,14 +6,26 @@ from math import floor
 from datatypes import *
 from visual import *
 
+def chunkPos(x,y,z):
+    cx = int(floor(x))>>4
+    cy = int(floor(y))>>7
+    cz = int(floor(z))>>4
+    return cx,cy,cz
+    
+def localPos(x,y,z):
+    lx = int(floor(x))&15
+    ly = int(floor(y))&127
+    lz = int(floor(z))&15
+    return lx,ly,lz
+        
 class Block(object):
     def __init__(self,x,y,z,type=0):
         self.x,self.y,self.z = x,y,z
-        self._type = type
-        self._box = box(pos=(x,y,z),visible=False,length=1,width=1,height=1,color=color.red)
+        self.type = type
+        #self._box = None
     def setType(self,type):
-        self._type = type
-        if type != 0: self._box.visible = True
+        self.type = type
+        #self._box = box(pos=(self.x,self.y,self.z),length=1,width=1,height=1,color=color.red) if (type == 3) else None 
     
 class Chunk(object):
     def __init__(self,cx,cy,cz,):
@@ -34,30 +46,20 @@ class Chunk(object):
 class World(object):
     def __init__(self):
         self._chunks = {}
-    def chunkPos(self,x,y,z):
-        cx = int(floor(x)) >> 4
-        cy = int(floor(y)) >> 7
-        cz = int(floor(z)) >> 4
-        return cx,cy,cz
-    def localPos(self,x,y,z):
-        lx = int(floor(x))&15
-        ly = int(floor(y))&127
-        lz = int(floor(z))&15
-        return lx,ly,lz
     def updateChunk(self,x,y,z,sx,sy,sz,data):
-        cx,cy,cz = self.chunkPos(x,y,z)
+        cx,cy,cz = chunkPos(x,y,z)
         chunk = None
         if (cx,cy,cz) in self._chunks:
             chunk = self._chunks[(cx,cy,cz)]
         else:
             chunk = Chunk(cx,cy,cz)
             self._chunks[(cx,cy,cz)] = chunk
-        lx,ly,lz = self.localPos(x,y,z)
+        lx,ly,lz = localPos(x,y,z)
         chunk.update(lx,ly,lz,sz,sy,sz,data)
     def getChunk(self,x,y,z):
-        cx,cy,cz = self.chunkPos(x,y,z)
-        return (self._chunks[(cx,cy,cz)],cx,cy,cz) if (cx,cy,cz) in self._chunks else None
+        cx,cy,cz = chunkPos(x,y,z)
+        return self._chunks[(cx,cy,cz)] if (cx,cy,cz) in self._chunks else None
     def getBlock(self,x,y,z):
         chunk = self.getChunk(x,y,z)
-        lx,ly,lz = self.localPos(x,y,z)
+        lx,ly,lz = localPos(x,y,z)
         return chunk.getBlock(lx,ly,lz) if chunk else None

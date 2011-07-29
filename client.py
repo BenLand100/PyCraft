@@ -18,6 +18,8 @@ class Client(object):
         #physics
         self.lasttime = time.time()
         self.deltat = 0.05
+        self.gravity = 9.8
+        self.onground = False
         
     def connect(self,host='127.0.0.1',port=25565):
         self.host = host
@@ -35,14 +37,15 @@ class Client(object):
         self.send(w_handshake_cts(username))
         
     def sendPos(self):
-        self.send(w_player_position_and_look_cts(self.us.x,self.us.y,self.us.stance,self.us.z,self.us.yaw,self.us.pitch,self.us.onground))
+        self.send(w_player_position_and_look_cts(self.us.x,self.us.y,self.us.y+self.us.height,self.us.z,self.us.yaw,self.us.pitch,self.onground))
+        print self.us.x,self.us.y,self.us.z
     
     def send(self,packet):
         self._socket.send(packet)
     
     def _keepalive(self,packet):
         print 'KeepAlive'
-        self.send(w_keepalive())
+        self.send(w_keep_alive())
        
     def _login(self,packet):
         self.us.eid = packet['EntityID']
@@ -64,8 +67,8 @@ class Client(object):
         self.us.x = packet['X']
         self.us.y = packet['Y']
         self.us.z = packet['Z']
-        self.us.stance = packet['Stance']
-        self.us.onground = packet['OnGround']
+        self.us.height = packet['Stance'] - self.us.y
+        self.onground = packet['OnGround']
         print 'Echoing position', packet
         self.sendPos()
         
@@ -73,7 +76,7 @@ class Client(object):
         self._playeronground(packet)
         self.us.yaw = packet['Yaw']
         self.us.pitch = packet['Pitch']
-        self.us.onground = packet['OnGround']
+        self.onground = packet['OnGround']
         print 'Echoing position', packet
         self.sendPos()
     
@@ -83,9 +86,9 @@ class Client(object):
         self.us.x = packet['X']
         self.us.y = packet['Y']
         self.us.z = packet['Z']
-        self.us.onground = packet['OnGround']
-        self.us.stance = packet['Stance']
-        print 'Echoing position', packet
+        self.onground = packet['OnGround']
+        self.us.height = packet['Stance'] - self.us.y
+        print 'Echoing position', self.us.height, packet['Stance'],self.us.y
         self.sendPos()
         self.inworld = True
         
@@ -135,7 +138,21 @@ class Client(object):
             elapsed = time.time() - self.lasttime 
             print elapsed
             self.lasttime = time.time()
-            #check position/collision, apply gravity if needed
+            block = self.world.getBlock(self.us.x,self.us.y,self.us.z)
+            if block:
+                print 'block:',block.type
+                if block.type > 0:
+                    self.onground = True
+                    self.us.vy = 0
+                    self.us.y = round(self.us.y)
+                else:
+                    self.onground = False
+                    self.us.vy -= self.gravity*elapsed
+            else:
+                print 'Our chunk is not loaded!'
+            self.us.x += self.us.vx*elapsed
+            self.us.y += self.us.vy*elapsed
+            self.us.z += self.us.vz*elapsed
             self.sendPos()
         return True
             

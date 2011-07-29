@@ -186,9 +186,9 @@ def w_painting(EntityID,Title,X,Y,Z,Direction):
 
 ###Packet 0x1B
 def r_stance_update(data):
-	return {'id':0x1B,'A':r_float(data),'B':r_float(data),'C':r_float(data),'D':r_float(data),'E':r_boolean(data),'F':r_boolean(data)}
+	return {'id':0x1B,'A':r_float(data),'B':r_float(data),'C':r_float(data),'D':r_float(data),'E':r_bool(data),'F':r_bool(data)}
 def w_stance_update(A,B,C,D,E,F):
-	return w_byte(0x1B)+w_float(A)+w_float(B)+w_float(C)+w_float(D)+w_boolean(E)+w_boolean(F)
+	return w_byte(0x1B)+w_float(A)+w_float(B)+w_float(C)+w_float(D)+w_bool(E)+w_bool(F)
 
 ###Packet 0x1C
 def r_entity_velocity(data):
@@ -265,13 +265,15 @@ def r_map_chunk(data):
 def w_map_chunk(X,Y,Z,SizeX,SizeY,SizeZ,CompressedSize,CompressedData):
 	return w_byte(0x33)+w_int(X)+w_short(Y)+w_int(Z)+w_byte(SizeX)+w_byte(SizeY)+w_byte(SizeZ)+w_int(CompressedSize)+CompressedData
 
-'''
 ###Packet 0x34
 def r_multi_block_change(data):
-	return {'id':0x34,'ChunkX':r_int(data),'ChunkZ':r_int(data),'ArraySize':r_short(data),'CoordinateArray':r_short array(data),'TypeArray':r_byte array(data),'MetadataArray':r_byte array(data)}
+	packet = {'id':0x34,'ChunkX':r_int(data),'ChunkZ':r_int(data),'ArraySize':r_short(data)}
+	size = packet['ArraySize']
+	packet.update({'CoordinateArray':data.read(size*2),'TypeArray':data.read(size),'MetadataArray':data.read(size)})
+	if len(packet['CoordinateArray'])+len(packet['TypeArray'])+len(packet['MetadataArray']) != size*4: raise struct.error('Not enough data')
+	return packet
 def w_multi_block_change(ChunkX,ChunkZ,ArraySize,CoordinateArray,TypeArray,MetadataArray):
-	return w_byte(0x34)+w_int(ChunkX)+w_int(ChunkZ)+w_short(ArraySize)+w_short array(CoordinateArray)+w_byte array(TypeArray)+w_byte array(MetadataArray)
-'''
+	return w_byte(0x34)+w_int(ChunkX)+w_int(ChunkZ)+w_short(ArraySize)+CoordinateArray+TypeArray+MetadataArray
 
 ###Packet 0x35
 def r_block_change(data):
@@ -307,9 +309,9 @@ def w_new_state(Reason):
 
 ###Packet 0x47
 def r_thunderbolt(data):
-	return {'id':0x47,'EntityID':r_int(data),'Unknown':r_boolean(data),'X':r_int(data),'Y':r_int(data),'Z':r_int(data)}
+	return {'id':0x47,'EntityID':r_int(data),'Unknown':r_bool(data),'X':r_int(data),'Y':r_int(data),'Z':r_int(data)}
 def w_thunderbolt(EntityID,Unknown,X,Y,Z):
-	return w_byte(0x47)+w_int(EntityID)+w_boolean(Unknown)+w_int(X)+w_int(Y)+w_int(Z)
+	return w_byte(0x47)+w_int(EntityID)+w_bool(Unknown)+w_int(X)+w_int(Y)+w_int(Z)
 
 ###Packet 0x64
 def r_open_window(data):
@@ -370,9 +372,9 @@ def w_update_progress_bar(WindowID,ProgressBar,Value):
 
 ###Packet 0x6A
 def r_transaction(data):
-	return {'id':0x6A,'WindowID':r_byte(data),'ActionNumber':r_short(data),'Accepted':r_boolean(data)}
+	return {'id':0x6A,'WindowID':r_byte(data),'ActionNumber':r_short(data),'Accepted':r_bool(data)}
 def w_transaction(WindowID,ActionNumber,Accepted):
-	return w_byte(0x6A)+w_byte(WindowID)+w_short(ActionNumber)+w_boolean(Accepted)
+	return w_byte(0x6A)+w_byte(WindowID)+w_short(ActionNumber)+w_bool(Accepted)
 
 ###Packet 0x82
 def r_update_sign(data):
@@ -440,7 +442,7 @@ packet_readers = {
 	0x28:r_entity_metadata,
 	0x32:r_prechunk,
 	0x33:r_map_chunk,
-	#0x34:r_multi_block_change,
+	0x34:r_multi_block_change,
 	0x35:r_block_change,
 	0x36:r_block_action,
 	#0x3C:r_explosion,
@@ -464,6 +466,10 @@ def readpacket(databuf):
     sio = StringIO(databuf)
     pid = r_ubyte(sio)
     if pid in packet_readers:
-        return (packet_readers[pid](sio),databuf[sio.tell():])
-    else: raise Exception('Unknown Packet: ' + hex(pid))
+        res = (packet_readers[pid](sio),databuf[sio.tell():])
+        sio.close()
+        return res
+    else: 
+        sio.close()
+        raise Exception('Unknown Packet: ' + hex(pid))
 

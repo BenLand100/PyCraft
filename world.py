@@ -1,19 +1,36 @@
 #all the stuff about blocks/chunks/world structure
 
+import zlib
+from cStringIO import StringIO
 from math import floor
+from datatypes import *
+from visual import *
 
 class Block(object):
-    def __init__(self):
-        pass
+    def __init__(self,x,y,z,type=0):
+        self.x,self.y,self.z = x,y,z
+        self._type = type
+        self._box = box(pos=(x,y,z),visible=False,length=1,width=1,height=1,color=color.red)
+    def setType(self,type):
+        self._type = type
+        if type != 0: self._box.visible = True
     
 class Chunk(object):
-    def __init__(self):
-        self._blocks = [[[Block() for z in range(16)] for y in range(128)] for x in range(16)]
+    def __init__(self,cx,cy,cz,):
+        self.cx,self.cy,self.cz = (cx,cy,cz)
+        print cx,cy,cz
+        self._blocks = [[[Block((cx<<4)+lx,(cy<<7)+ly,(cz<<4)+lz) for lz in range(16)] for ly in range(128)] for lx in range(16)]
     def getBlock(self,lx,ly,lz):
         return self._blocks[lx][ly][lz]
     def update(self,lx,ly,lz,sx,sy,sz,data):
-        pass
-    
+        data = StringIO(zlib.decompress(data))
+        for x in range(lx,sx+1):
+            for z in range(lz,sz+1):
+                for y in range(ly,sy+1):
+                    self._blocks[x][y][z].setType(r_ubyte(data))
+        #ignore the rest for now
+        data.close()
+        
 class World(object):
     def __init__(self):
         self._chunks = {}
@@ -23,10 +40,9 @@ class World(object):
         cz = int(floor(z)) >> 4
         return cx,cy,cz
     def localPos(self,x,y,z):
-        cx,cy,cz = self.chunkPos(x,y,z)
-        lx = int(floor(x-16*cx))
-        ly = int(floor(y-16*cy))
-        lz = int(floor(z-16*cz))
+        lx = int(floor(x))&15
+        ly = int(floor(y))&127
+        lz = int(floor(z))&15
         return lx,ly,lz
     def updateChunk(self,x,y,z,sx,sy,sz,data):
         cx,cy,cz = self.chunkPos(x,y,z)
@@ -34,7 +50,7 @@ class World(object):
         if (cx,cy,cz) in self._chunks:
             chunk = self._chunks[(cx,cy,cz)]
         else:
-            chunk = Chunk()
+            chunk = Chunk(cx,cy,cz)
             self._chunks[(cx,cy,cz)] = chunk
         lx,ly,lz = self.localPos(x,y,z)
         chunk.update(lx,ly,lz,sz,sy,sz,data)

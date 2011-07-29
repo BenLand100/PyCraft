@@ -51,6 +51,9 @@ class Client(object):
     def _handshake(self,packet):
         self.send(w_login_request_cts(14,self.us.name,0,0))
         
+    def _chat(self,packet):
+        print 'CHAT',packet['Message']
+        
     def _playeronground(self,packet):
         self.us.onground = packet['OnGround']
         print 'Echoing position', packet
@@ -100,12 +103,12 @@ class Client(object):
         print hex(packet['id']),packet
         
     hooks = {
-        0x00:_keepalive,0x01:_login,0x02:_handshake,
+        0x00:_keepalive,0x01:_login,0x02:_handshake,0x03:_chat,
         
         0x0A:_playeronground,0x0B:_playerpos,0x0C:_playerlook,0x0D:_playerlookandpos, #player location
     
-        0x18:_ignore,0x1c:_ignore,0x1d:_ignore,0x1e:_ignore,0x1f:_ignore,0x20:_ignore,0x21:_ignore, #entity moving stuff
-        0x32:_dump,0x33:_chunkdata, #chunk stuff
+        0x18:_ignore,0x1c:_ignore,0x1d:_ignore,0x1e:_ignore,0x1f:_ignore,0x20:_ignore,0x21:_ignore,0x22:_ignore, #entity moving stuff
+        0x32:_ignore,0x33:_chunkdata, #chunk stuff
         
         0xff:_kicked
     };
@@ -130,6 +133,7 @@ class Client(object):
         #do physics
         if self.inworld and time.time() - self.lasttime > self.deltat:
             elapsed = time.time() - self.lasttime 
+            print elapsed
             self.lasttime = time.time()
             #check position/collision, apply gravity if needed
             self.sendPos()

@@ -2,8 +2,53 @@
 
 import socket,struct
 import time
+from math import floor
 from packets import *
 
+class Block(object):
+    def __init__(self):
+        pass
+    
+class Chunk(object):
+    def __init__(self):
+        self._blocks = [[[Block() for z in range(16)] for y in range(128)] for x in range(16)]
+    def getBlock(self,lx,ly,lz):
+        return self._blocks[lx][ly][lz]
+    def update(self,lx,ly,lz,sx,sy,sz,data):
+        pass
+    
+class World(object):
+    def __init__(self):
+        self._chunks = {}
+    def chunkPos(self,x,y,z):
+        cx = int(floor(x)) >> 4
+        cy = int(floor(y)) >> 7
+        cz = int(floor(z)) >> 4
+        return cx,cy,cz
+    def localPos(self,x,y,z):
+        cx,cy,cz = self.chunkPos(x,y,z)
+        lx = int(floor(x-16*cx))
+        ly = int(floor(y-16*cy))
+        lz = int(floor(z-16*cz))
+        return lx,ly,lz
+    def updateChunk(self,x,y,z,sx,sy,sz,data):
+        cx,cy,cz = self.chunkPos(x,y,z)
+        chunk = None
+        if (cx,cy,cz) in self._chunks:
+            chunk = self._chunks[(cx,cy,cz)]
+        else:
+            chunk = Chunk()
+            self._chunks[(cx,cy,cz)] = chunk
+        lx,ly,lz = self.localPos(x,y,z)
+        chunk.update(lx,ly,lz,sz,sy,sz,data)
+    def getChunk(self,x,y,z):
+        cx,cy,cz = self.chunkPos(x,y,z)
+        return (self._chunks[(cx,cy,cz)],cx,cy,cz) if (cx,cy,cz) in self._chunks else None
+    def getBlock(self,x,y,z):
+        chunk = self.getChunk(x,y,z)
+        lx,ly,lz = self.localPos(x,y,z)
+        return chunk.getBlock(lx,ly,lz) if chunk else None
+            
 class Entity(object):
     def __init__(self,eid=0,x=0,y=0,z=0,pitch=0,yaw=0,vx=0,vy=0,vz=0):
         self.eid = eid
@@ -31,6 +76,12 @@ class Client(object):
     def __init__(self):
         self._socket = socket.socket()
         self.us = Player()
+        self.world = World()
+        self.inworld = False
+        self.tick = 0;
+        #physics
+        self.lasttime = time.time()
+        self.deltat = 0.05
         
     def connect(self,host='127.0.0.1',port=25565):
         self.host = host
@@ -59,7 +110,7 @@ class Client(object):
        
     def _login(self,packet):
         self.us.eid = packet['EntityID']
-        print 'Party == Started'
+        print 'Login Success'
      
     def _handshake(self,packet):
         self.send(w_login_request_cts(14,self.us.name,0,0))
@@ -97,6 +148,11 @@ class Client(object):
         self.us.stance = packet['Stance']
         print 'Echoing position', packet
         self.sendPos()
+        self.inworld = True
+        
+    def _chunkdata(self,packet):
+        print 'Chunk Update'
+        self.world.updateChunk(packet['X'],packet['Y'],packet['Z'],packet['SizeX'],packet['SizeY'],packet['SizeZ'],packet['CompressedData'])
         
     def _kicked(self,packet):
         print 'KICKED:',packet['Message']
@@ -113,13 +169,14 @@ class Client(object):
         0x0A:_playeronground,0x0B:_playerpos,0x0C:_playerlook,0x0D:_playerlookandpos, #player location
     
         0x18:_ignore,0x1c:_ignore,0x1d:_ignore,0x1e:_ignore,0x1f:_ignore,0x20:_ignore,0x21:_ignore, #entity moving stuff
-        0x32:_dump,0x33:_dump, #chunk stuff
+        0x32:_dump,0x33:_chunkdata, #chunk stuff
         
         0xff:_kicked
     };
     _data = '';
 
     def pump(self):
+        #read packets
         try:
             read = self._socket.recv(16)
             if len(read) == 0: 
@@ -134,6 +191,12 @@ class Client(object):
             pass
         except struct.error,msg:
             pass
+        #do physics
+        if self.inworld and time.time() - self.lasttime > self.deltat:
+            elapsed = time.time() - self.lasttime 
+            self.lasttime = time.time()
+            #check position/collision, apply gravity if needed
+            self.sendPos()
         return True
             
             

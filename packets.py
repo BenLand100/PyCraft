@@ -1,3 +1,4 @@
+import struct
 from datatypes import *
 from cStringIO import StringIO
 

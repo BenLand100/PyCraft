@@ -1,76 +1,12 @@
 #!/usr/bin/python
 
-import socket,struct
-import time
-from math import floor
-from packets import *
+#Everything for managing the client state
 
-class Block(object):
-    def __init__(self):
-        pass
-    
-class Chunk(object):
-    def __init__(self):
-        self._blocks = [[[Block() for z in range(16)] for y in range(128)] for x in range(16)]
-    def getBlock(self,lx,ly,lz):
-        return self._blocks[lx][ly][lz]
-    def update(self,lx,ly,lz,sx,sy,sz,data):
-        pass
-    
-class World(object):
-    def __init__(self):
-        self._chunks = {}
-    def chunkPos(self,x,y,z):
-        cx = int(floor(x)) >> 4
-        cy = int(floor(y)) >> 7
-        cz = int(floor(z)) >> 4
-        return cx,cy,cz
-    def localPos(self,x,y,z):
-        cx,cy,cz = self.chunkPos(x,y,z)
-        lx = int(floor(x-16*cx))
-        ly = int(floor(y-16*cy))
-        lz = int(floor(z-16*cz))
-        return lx,ly,lz
-    def updateChunk(self,x,y,z,sx,sy,sz,data):
-        cx,cy,cz = self.chunkPos(x,y,z)
-        chunk = None
-        if (cx,cy,cz) in self._chunks:
-            chunk = self._chunks[(cx,cy,cz)]
-        else:
-            chunk = Chunk()
-            self._chunks[(cx,cy,cz)] = chunk
-        lx,ly,lz = self.localPos(x,y,z)
-        chunk.update(lx,ly,lz,sz,sy,sz,data)
-    def getChunk(self,x,y,z):
-        cx,cy,cz = self.chunkPos(x,y,z)
-        return (self._chunks[(cx,cy,cz)],cx,cy,cz) if (cx,cy,cz) in self._chunks else None
-    def getBlock(self,x,y,z):
-        chunk = self.getChunk(x,y,z)
-        lx,ly,lz = self.localPos(x,y,z)
-        return chunk.getBlock(lx,ly,lz) if chunk else None
-            
-class Entity(object):
-    def __init__(self,eid=0,x=0,y=0,z=0,pitch=0,yaw=0,vx=0,vy=0,vz=0):
-        self.eid = eid
-        self.x = x
-        self.y = y
-        self.z = z
-        self.pitch = pitch
-        self.yaw = yaw
-        self.vx = vx
-        self.vy = vy
-        self.vz = vz
-    
-class Player(Entity):
-    def __init__(self,eid=0,name='',x=0,y=0,z=0,pitch=0,yaw=0,vx=0,vy=0,vz=0):
-        Entity.__init__(self,eid,x,y,z,pitch,yaw,vx,vy,vz)
-        self.name = name
-    
-class Mob(Entity):
-    def __init__(self,eid=0,mobtype=0,metadata=[],x=0,y=0,z=0,pitch=0,yaw=0,vx=0,vy=0,vz=0):
-        Entity.__init__(self,eid,x,y,z,pitch,yaw,vx,vy,vz)
-        self.mobtype = mobtype
-        self.metadata = metadata
+import socket,struct,time
+
+from packets import *
+from world import *
+from entities import *
 
 class Client(object):
     def __init__(self):

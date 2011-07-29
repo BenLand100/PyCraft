@@ -1,3 +1,5 @@
+#parsers for the data stream from the server
+
 from struct import pack,unpack
 
 def w_char(data):

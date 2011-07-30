@@ -19,6 +19,7 @@ class Client(object):
         self.lasttime = time.time()
         self.deltat = 0.05
         self.gravity = 9.8
+        self.maxv = 4.5
         self.onground = False
         
     def connect(self,host='127.0.0.1',port=25565):
@@ -38,7 +39,7 @@ class Client(object):
         
     def sendPos(self):
         self.send(w_player_position_and_look_cts(self.us.x,self.us.y,self.us.y+self.us.height,self.us.z,self.us.yaw,self.us.pitch,self.onground))
-        print self.us.x,self.us.y,self.us.z
+        #print self.us.x,self.us.y,self.us.z
     
     def send(self,packet):
         self._socket.send(packet)
@@ -135,12 +136,10 @@ class Client(object):
             pass
         #do physics
         if self.inworld and time.time() - self.lasttime > self.deltat:
-            elapsed = time.time() - self.lasttime 
-            print elapsed
+            elapsed = 0.05#time.time() - self.lasttime
             self.lasttime = time.time()
-            block = self.world.getBlock(self.us.x,self.us.y,self.us.z)
+            block = self.world.getBlock(self.us.x,self.us.y if round(self.us.y) != self.us.y else self.us.y-1,self.us.z)
             if block:
-                print 'block:',block.type
                 if block.type > 0:
                     self.onground = True
                     self.us.vy = 0
@@ -150,6 +149,11 @@ class Client(object):
                     self.us.vy -= self.gravity*elapsed
             else:
                 print 'Our chunk is not loaded!'
+               
+            if self.us.vx > self.maxv: self.us.vx = self.maxv
+            if self.us.vy > self.maxv: self.us.vy = self.maxv
+            if self.us.vz > self.maxv: self.us.vz = self.maxv
+            
             self.us.x += self.us.vx*elapsed
             self.us.y += self.us.vy*elapsed
             self.us.z += self.us.vz*elapsed
@@ -157,6 +161,8 @@ class Client(object):
         return True
             
             
+import psyco
+psyco.full()
 client = Client();
 if client.connect():
     client.login('YourMom')

@@ -30,7 +30,7 @@ class Block(object):
 class Chunk(object):
     def __init__(self,cx,cy,cz,):
         self.cx,self.cy,self.cz = (cx,cy,cz)
-        print cx,cy,cz
+        #print cx,cy,cz
         self._blocks = [[[Block((cx<<4)+lx,(cy<<7)+ly,(cz<<4)+lz) for lz in range(16)] for ly in range(128)] for lx in range(16)]
     def getBlock(self,lx,ly,lz):
         return self._blocks[lx][ly][lz]
